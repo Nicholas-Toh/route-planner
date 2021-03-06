@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% set create_task_form_id = "create-task-form" %}
+{% set create_task_modal_id = "create-task-modal" %}
+{% set create_task_modal_title = "Create a New Task" %}
+{% set create_task_modal_button_id = "create-task-modal-btn" %}
+{% set create_task_modal_button_name = "+ Create New Task" %}
+
+{% set delete_task_form_id = "delete-task-form" %}
+{% set delete_task_modal_id = "delete-task-modal" %}
+{% set delete_task_modal_title = "Delete a Task" %}
+{% set delete_task_modal_button_id = "delete-task-modal-btn" %}
+{% set delete_task_modal_button_name = "Delete Task" %}
+
+{% set date_left_button_id = "date-left-btn" %}
+{% set date_right_button_id = "date-right-btn" %}
+{% set today_button_id = "today-btn" %}
+{% set today_button_name = "Today" %}
+
+{% set task_menu_id = "task_menu_id" %}
+{% set task_menu_option_delete_task_id = "delete-task" %}
+{% set task_menu_option_delete_task = "Delete Task" %}
+
+{% block app_content %}
+{% with form = create_task_form, table_title=create_task_modal_title, modal_button_id=create_task_modal_button_id, modal_id=create_task_modal_id, form_id=create_task_form_id, form_html='tasks/_create_task_form.html' %}
+  {% include '_modal.html' %}
+{% endwith %}
+
+{% with form = delete_task_form, table_title=delete_task_modal_title, modal_button_id=delete_task_modal_button_id, modal_id=delete_task_modal_id %}
+    {% include '_modal.html' %}
+{% endwith %}
+
+<div class="container row">
+    <div class="col-sm-1 text-left">
+        <button class="btn btn-dark" id="{{ date_left_button_id }}"><i class="fas fa-chevron-left"></i></button>
+    </div>
+    <div class="col-sm-5 text-center">
+        <h2 class="text-center date-header">{{ start.strftime('%d/%m/%Y') }} - {{ end.strftime('%d/%m/%Y') }}</h2>
+    </div>
+    <div class="col-sm-1 text-right">
+        <button class="btn btn-dark" id="{{ date_right_button_id }}"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="col-sm-auto">
+        <button id="{{ today_button }}" type="button" class="btn btn-dark">
+            {{ today_button_name }}
+        </button>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{ create_task_modal_id }}">
+            {{ create_task_modal_button_name }}
+        </button>
+        <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#{{ delete_task_modal_id }}">
+            {{ delete_task_modal_button_name }}
+        </button>   
+    </div>
+    
+</div>
+<div class="container row">
+    <div class="col-sm-7">
+        {% with tasks = mandatory_tasks, table_title = "Mandatory Tasks", id = "mandatory" %}
+        <div class="overflow-auto task-container">
+            {% include 'tasks/_full_tasks.html' %}
+        </div>
+        {% endwith %}
+    
+        {% with tasks = custom_tasks, table_title = "Custom Tasks", id = "custom" %}
+        <div class="overflow-auto task-container">
+            {% include 'tasks/_full_tasks.html' %}
+        </div>
+        {% endwith %} 
+    </div>
+    <div class="col-sm-5">
+        <div class="overflow-auto task-container">
+            {% include 'tasks/_upcoming_tasks.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+    <script>
+        var start = UTCToLocal(new Date(Date.parse('{{ start.isoformat() }}')));
+        var end = addDays(start, weekOffset);
+        console.log('{{ start.isoformat() }}');
+        var weekOffset = parseInt('{{ config["DAYS_PER_WEEK"] }}');
+        $('#{{ date_left_button_id }}').click(function()
+        {
+            start = addDays(start, -(weekOffset + 1));
+            end = addDays(start, weekOffset);
+            
+            window.location.replace(`{{ url_for('tasks.user_tasks', username=current_user.username) }}?start=${ISODate(start)}&end=${ISODate(end)}`);
+            /*
+            $('.date-header').text(`${moment(start).format("DD/MM/YYYY")} - ${moment(end).format("DD/MM/YYYY")}`);
+            
+            makeGetCall("{{ url_for('tasks.taskweek_data', username=current_user.username) }}",
+            {'start': start.toISOString(), 'end': end.toISOString()})
+            .done(function(data)
+            {
+                $( ".task-content" ).remove();
+                populateTasks(data);
+            })
+            .fail(function(requestObject, error, errorThrown) {
+                alert(error);
+                alert(errorThrown);
+            });
+            */
+        });
+        
+        $('#{{ date_right_button_id }}').click(function()
+        {
+            start = addDays(start, weekOffset + 1);
+            end = addDays(start, weekOffset);
+            window.location.replace(`{{ url_for('tasks.user_tasks', username=current_user.username) }}?start=${ISODate(start)}&end=${ISODate(end)}`);
+            
+            /*
+            $('.date-header').text(`${moment(start).format("DD/MM/YYYY")} - ${moment(end).format("DD/MM/YYYY")}`);
+
+            makeGetCall("{{ url_for('tasks.taskweek_data', username=current_user.username) }}",
+            {'start': start.toISOString(), 'end': end.toISOString()})
+            .done(function(data)
+            {
+                $( ".task-content" ).remove();
+                populateTasks(data);
+            })
+            .fail(function(requestObject, error, errorThrown) {
+                alert(error);
+                alert(errorThrown);
+            });
+            */
+        });
+        
+        $('#{{ today_button_id }}').click(function()
+        {
+            window.location.replace(`{{ url_for('tasks.user_tasks', username=current_user.username) }}`);
+        });
+
+        function addDays(date, days) {
+            var result = new Date(date);
+            result.setDate(date.getDate() + days);
+            return result;
+        }
+
+        populateTasks = function(data)
+        {
+            var weeks = data.weeks
+
+            for(let i = 0; i < tasks.length; i++)
+            {
+                let week = weeks[i];
+                let task = week.task;
+
+                if (task.type === 'Mandatory')
+                {
+                }
+                else if (task.type === 'Custom')
+                {
+
+                }
+            }
+        }
+
+
+        $('#{{ create_task_form.id }}').submit(function() 
+        {
+          let form = document.forms['{{ create_task_form.id }}'];
+          let start = new Date(form.elements['user_start'].valueAsDate);    
+          let end = new Date(form.elements['user_end'].valueAsDate); 
+          form.elements['start'].value = localToUTC(start).toISOString().slice(0, 16);
+          form.elements['end'].value = localToUTC(end).toISOString().slice(0, 16);
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% if total_distance_id is not defined %}
+    {% set total_distance_id = "stats-total-distance" %}
+{% endif %}
+
+{% if total_value_id is not defined %}
+    {% set total_value_id = "stats-total-value" %}
+{% endif %}
+
+{% if num_tasks_id is not defined %}
+    {% set num_tasks_id = "stats-num-tasks" %}
+{% endif %}
+
+{% if num_outlets_id is not defined %}
+    {% set num_outlets_id = "stats-num-outlets" %}
+{% endif %}
+
+<table class="table table-responsive">
+    <thead class="thead-light">
+        <tr>
+            <th class="text-center" colspan="4"> Schedule Statistics</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Total Distance:</td>
+            <td id="{{ total_distance_id }}">50 km</td>
+        </tr>
+        <tr>
+            <td>Total Value:</td>
+            <td id="{{ total_value_id  }}">2000</td>
+        </tr>
+        <tr>
+            <td>Number of Tasks:</td>
+            <td id="{{ num_tasks_id }}">9</td>
+        </tr>
+        <tr>
+            <td>Number of Outlets:</td>
+            <td id="{{ num_outlets_id }}">6</td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    populateStatsTable = function(stats)
+    {
+        if (stats)
+        {
+            $('#{{ total_distance_id }}').text(`${stats.total_distance.toFixed(3)} km`);
+            $('#{{ total_value_id }}').text(`${stats.total_value.toFixed(4)}`);
+            $('#{{ num_tasks_id }}').text(`${stats.num_tasks}`);
+            $('#{{ num_outlets_id }}').text(`${stats.num_outlets}`);
+        }
+        else
+        {
+            $('#{{ total_distance_id }}').text(`0.000 km`);
+            $('#{{ total_value_id }}').text(`0.0000`);
+            $('#{{ num_tasks_id }}').text(`0`);
+            $('#{{ num_outlets_id }}').text(`0`);
+        }
+    }
+</script>

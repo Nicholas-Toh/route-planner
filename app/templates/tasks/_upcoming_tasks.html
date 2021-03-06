@@ -1,0 +1,25 @@
+<table class="table table-responsive" id="upcoming-tasks">
+    <thead class="thead-light">
+        <tr class="" >
+            <th class="text-center" colspan="5">Upcoming Tasks</th>
+        </tr>
+        <tr class="">
+            <th>ID</th>
+            <th>Task</th>
+            <th>Date</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for schedule in upcoming_schedules %}
+        <tr class="table-content">
+            <td>{{ schedule.task.id }}</td>
+            <td>{{ schedule.task.title }}</td>
+            <td>{{ to_timezone(schedule.start, to_timezone=session['timezone']).strftime('%d/%m/%Y') }}</td>
+            <td class="text-center" >{{ to_timezone(schedule.start, to_timezone=session['timezone']).strftime('%H:%M') }}</td>
+            <td class="text-center" >{{ to_timezone(schedule.end, to_timezone=session['timezone']).strftime('%H:%M') }}</td>
+        </tr>
+    </tbody> 
+    {% endfor %}
+</table>

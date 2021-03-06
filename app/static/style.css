@@ -1,0 +1,92 @@
+.wrapper {
+    display: flex;
+    width: 100%;
+}
+
+#sidebar {
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 999;
+    background: #4a2679;
+    color: #fff;
+    transition: all 0.3s;
+}
+
+.sidebar-header
+{
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content
+{
+    width: calc(100% - 250px);
+    padding: 20px 40px 20px 40px;
+    min-height: 100vh;
+    transition: all 0.3s;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.landing-content
+{
+    padding: 40px;
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+#header-nav
+{
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+    height: 7vh;
+}
+
+.link-unstyled, .link-unstyled:link, .link-unstyled:hover {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+#sidebar ul p {
+    color: #fff;
+    padding: 10px;
+}
+
+#sidebar ul li a {
+    padding: 10px;
+    font-size: 1.1em;
+    display: block;
+}
+
+#sidebar ul li a:hover {
+    color: #ffffff;
+    background: #7386D5;
+}
+
+#map
+{
+    width: 20em;
+}
+
+#upcoming
+{
+}
+
+#remarks
+{
+}
+
+.hidden-input
+{
+    display: none;
+}
+
+.task-container
+{
+    max-height: 18em;
+}

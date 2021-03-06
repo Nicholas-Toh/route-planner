@@ -1,0 +1,49 @@
+<table class="table-striped table-responsive" id="{{ table_id }}">
+    <thead>
+        <tr>
+            <th class="text-center" colspan="4">{{ table_title }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th>ID</th>
+            <th>Task</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+        </tr>
+        {% for task in tasks %}
+            <tr class="{{ table_content_class }}">
+                <td>{{ task.id }}</td>
+                <td>{{ task.title }}</td>
+                <td>{{ to_timezone(task.start_date, to_timezone=session['timezone']).strftime('%d/%m/%Y') }}</td>
+                <td>{{ to_timezone(task.end_date, to_timezone=session['timezone']).strftime('%d/%m/%Y') }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    populateTasks = function (tasks)
+    {
+        $(".{{ table_content_class }}").remove();
+
+        for (let i = 0; i < tasks.length; i++)
+        {
+            let id = tasks[i].id;
+            let title = tasks[i].title;
+            let start = moment(tasks[i].start_date).format("DD/MM/YYYY");
+            let end = moment(tasks[i].end_date).format("DD/MM/YYYY");
+            $("#{{ table_id }} > tbody:last-child").append
+            (
+                `
+                <tr class="{{ table_content_class }}">
+                <td>${id}</td>
+                <td>${title}</td>
+                <td class="text-center" >${start}</td>
+                <td class="text-center" >${end}</td>
+                </tr>
+                `
+            );
+        }
+    }
+</script>

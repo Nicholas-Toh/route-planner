@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% set schedule_modal_button_id = schedule_task_form.id + "-btn" %}
+{% set schedule_modal_id = schedule_task_form.id + "-modal" %}
+
+{% set schedule_task_button_id = "schedule-form-btn" %}
+{% set schedule_task_form_title = "Schedule a New Task" %}
+
+{% set unscheduled_table_id = "unscheduled_table" %}
+{% set unscheduled_table_content_class = "unscheduled-table-content" %}
+{% set unscheduled_table_title = "Unscheduled Tasks" %}
+
+{% set calendar_menu_id = "context-menu-calendar" %}
+
+{% set calendar_menu_option_unschedule_id = "unschedule" %}
+{% set calendar_menu_option_unschedule = "Unschedule task" %}
+
+{% set loading_div_id = "loading" %}
+
+{% set save_schedule_div_id = "save-schedule" %}
+{% set save_schedule_btn_id = "save-schedule-btn" %}
+
+{% block app_content scoped %}
+  <!-- Button trigger modal -->
+  {% with form = schedule_task_form, table_title=schedule_task_form_title, modal_button_id=schedule_modal_button_id, modal_id=schedule_modal_id %}
+    {% include '_modal.html' %}
+  {% endwith %}
+  <div class="row">
+    <div class="col-sm-8" id="calendar"></div>
+    <div class="col-sm-4">
+      {% with table_title = unscheduled_table_title, table_id=unscheduled_table_id, table_content_class=unscheduled_table_content_class, tasks=all_tasks %}
+        <div style="display:none" id="{{ loading_div_id }}">
+          <div class="mt-2 mb-2 d-flex justify-content-start">
+            <div class="spinner-border text-secondary" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+            <div class="ml-3 d-flex align-items-center">
+              <span class="text-secondary"><i>Optimizing...</i></span>
+            </div>
+          </div>
+        </div>
+        <div style="display:none" id="{{ save_schedule_div_id }}">
+          <div class="mb-2">
+            <button class="btn btn-primary" id="{{ save_schedule_btn_id }}">
+              Save Schedule
+            </button>
+          </div>
+        </div>
+        <div class="overflow-auto task-container mt-2 mb-2">
+          {% include 'tasks/_tasks.html' %}
+        </div>
+        <div class="mt-2 mb-2">
+          {% include 'calendar/_schedule_stats.html' %}
+        </div>
+      {% endwith %}
+    </div>
+    <div class="dropdown-menu dropdown-menu-sm" id="{{ calendar_menu_id }}">
+    <div class="dropdown-item" id="{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}">{{ calendar_menu_option_unschedule }}</div>
+    </div>
+  </div>
+  
+  
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.5.1/main.min.js" integrity="sha256-rPPF6R+AH/Gilj2aC00ZAuB2EKmnEjXlEWx5MkAp7bw=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.5.1/main.min.css" integrity="sha256-uq9PNlMzB+1h01Ij9cx7zeE2OR2pLAfRw3uUUOOPKdA=" crossorigin="anonymous">    
+{% endblock %}
+
+{% block scripts%}
+    {{ super() }}
+    <script>
+        var i = 1;
+        var isTemporarySchedule = false;
+        var calendar;
+
+        document.addEventListener('DOMContentLoaded', function() {
+          var calendarEl = document.getElementById('calendar');
+          calendar = new FullCalendar.Calendar(calendarEl, {
+            timeZone: 'local',
+            initialDate: '{{ start_date.isoformat() }}',
+            initialView: 'timeGridWeek',
+            weekNumberCalculation: 'ISO',
+            weekNumbers: true,
+            allDaySlot: false,
+            firstDay: 1,
+            slotMinTime: "08:00:00",
+            slotMaxTime: "20:00:00",
+            slotDuration: "00:30:00",
+            events: function(info, success, failure)
+            {
+              makeGetCall("{{ url_for('calendar.schedule_data', username=current_user.username) }}", 
+              {'start': info.start.toISOString().slice(0, 16), 'end':info.end.toISOString().slice(0, 16)})
+              .done(function(data)
+              {
+                removeEvents(); //Because somehow calling api doesnt refresh cache
+                populateStatsTable(data.stats);
+                setEventStates(data.tasks);
+                success(data.tasks);
+                isTemporarySchedule = false;
+                deactivateSaveSchedule();
+              })
+              .fail(function(requestObject, error, errorThrown) {
+                alert(error);
+                alert(errorThrown);
+              });
+            },
+            selectable: "true",
+            eventOverlap: "false",
+            customButtons: {
+              newTaskButton: {
+                text: '+ New Task',
+                click: function() {
+                  $("#{{ schedule_modal_button_id }}").trigger("click");
+                } 
+              },
+              optimizeScheduleButton:
+              {
+                text: 'Optimize',
+                click: function()
+                {
+                  activateLoadingWheel();
+                  makeGetCall("{{ url_for('calendar.optimize_schedule', username=current_user.username) }}", 
+                  {"start": getCalendarDateRange().start.toISOString().slice(0, 16), "end": getCalendarDateRange().end.toISOString().slice(0, 16)})
+                  .done(function(data) {
+                    updateEvents(data.tasks);
+                    populateStatsTable(data.stats);
+                    deactivateLoadingWheel();
+                    activateSaveSchedule();
+                    isTemporarySchedule = true;
+                  })
+                  .fail(function(requestObject, error, errorThrown) {
+                    deactivateLoadingWheel();
+                    alert(error);
+                  });
+                }
+              }
+            },
+            headerToolbar: {
+              left: 'title',
+              center: '',
+              right: 'newTaskButton,optimizeScheduleButton,today,prev,next'
+            },
+            datesSet: handleDatesSet,
+            select: handleSelect,
+            eventClick: handleEventClick,
+          });
+          calendar.render();
+        });
+
+        handleSelect = function(selectInfo)
+        {
+          let start = UTCToLocal(selectInfo.start); 
+          let end = UTCToLocal(selectInfo.end)
+          document.forms['{{ schedule_task_form.id }}'].elements['start'].value = start.toISOString().slice(0, 16);
+          document.forms['{{ schedule_task_form.id }}'].elements['end'].value = end.toISOString().slice(0, 16);
+          $("#{{schedule_modal_button_id}}").trigger("click");
+        }
+        
+        handleDatesSet = function(dateInfo)
+        {
+          if (i > 0)
+          {
+            i--;
+          }
+          else
+          {
+            fetchUnscheduledTasks(dateInfo.startStr, dateInfo.endStr);
+          }
+        }
+
+        handleEventClick = function(info) 
+        {
+          var menu = document.getElementById("{{ calendar_menu_id }}");
+          var body = document.getElementById("content");
+          var top = info.jsEvent.pageY;
+          var left = info.jsEvent.pageX - body.getBoundingClientRect().x;
+          
+          if (!isTemporarySchedule)
+          {
+            menu.style.display = "block";
+            menu.style.position = "absolute";
+            menu.style.top = top+"px";
+            menu.style.left = left+"px";
+            menu.classList.add("show");
+          }
+          registerHandlers(info, isTemporarySchedule);
+        }
+
+        registerHandlers = function (info, isTemporarySchedule)
+        {
+          $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}').off("click");
+          $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}').click(info.event, function(e)
+          {
+            var payload = info.event.toPlainObject().extendedProps.schedule_obj;
+            var start = info.view.currentStart.toISOString().slice(0, 16);
+            var end = info.view.currentEnd.toISOString().slice(0, 16);
+            if (!isTemporarySchedule)
+            {
+              unscheduleTask(payload, start, end);
+              fetchUnscheduledTasks(start, end);
+            }
+          });
+        }
+
+        fetchUnscheduledTasks = function(startDate, endDate)
+        {
+          makeGetCall("{{ url_for('calendar.schedule_data', username=current_user.username) }}", 
+            {'start': startDate, 'end': endDate, unscheduled: true})
+            .done(function(data)
+            {
+              populateTasks(data.tasks);
+            })
+            .fail(function(requestObject, error, errorThrown) 
+            {
+              alert(error);
+              alert(errorThrown);
+            });
+        }
+
+        unscheduleTask = function(payload, startDate, endDate)
+        {
+          makeDeleteCall(`{{ url_for('calendar.schedule_data', username=current_user.username) }}?start=${startDate}&end=${endDate}`, 
+            {'task': payload}).
+            done(function(data)
+            {
+              updateEvents(data.tasks);
+              populateStatsTable(data.stats);
+            });
+        }
+
+        updateEvents = function(events)
+        {
+          calendar.batchRendering(() => 
+          {
+            removeEvents();
+            setEventStates(events);
+            events.forEach(event => calendar.addEvent(event));
+          });
+        }
+
+        removeEvents = function()
+        {
+          calendar.getEvents().forEach(event => event.remove());
+        }
+
+        getCalendarDateRange = function()
+        {
+          var obj = 
+          {
+            start: calendar.view.currentStart,
+            end: calendar.view.currentEnd,
+          };
+          return obj;
+        }
+
+        setEventStates = function(events)
+        {
+          for(let i = 0; i < events.length; i++)
+          {
+            if (events[i].is_out_of_range)
+            {
+              events[i].backgroundColor = "darkorange";
+            }
+          }
+        }
+
+        activateSaveSchedule = function()
+        {
+          $("#{{ save_schedule_div_id }}").css('display', 'block');
+        }
+
+        deactivateSaveSchedule = function()
+        {
+          $("#{{ save_schedule_div_id }}").css('display', 'none');
+        }
+
+        activateLoadingWheel = function()
+        {
+          $("#{{ loading_div_id }}").css('display', 'block');
+        }
+
+        deactivateLoadingWheel = function()
+        {
+          $("#{{ loading_div_id }}").css('display', 'none');
+        }
+
+        $("body").on("click", function(e) 
+        {
+          if (e.target.id !== "{{ calendar_menu_id }}") 
+          {
+            if ($("#{{ calendar_menu_id }}")[0].style.display === "block")
+            {
+              if ($("#{{ calendar_menu_id }}")[0].classList.contains("show"))
+              {
+                $("#{{ calendar_menu_id }}")[0].classList.remove("show")
+              }
+              else
+              {
+                $("#{{ calendar_menu_id }}")[0].style.display = "none"; 
+              }
+            }
+          }
+        });
+
+        $("#{{ calendar_menu_id }} a").click(function() 
+        {
+          $(this).parent().removeClass("show").hide();
+        });
+
+        $('#{{ schedule_task_form.id }}').submit(function() 
+        {
+          let form = document.forms['{{ schedule_task_form.id }}'];
+          let start = new Date(form.elements['start'].value);    
+          let end = new Date(form.elements['end'].value); 
+          form.elements['start'].value = start.toISOString().slice(0, 16);
+          form.elements['end'].value = end.toISOString().slice(0, 16)          
+        });
+
+        $('#{{save_schedule_btn_id}}').click(function() 
+        {
+          let events = calendar.getEvents();
+          for (let i = 0; i < events.length; i++)
+          {
+            events[i] = events[i].toPlainObject().extendedProps.schedule_obj;
+          }
+          makePostCall(`{{ url_for('calendar.schedule_data', username=current_user.username) }}`, {'tasks': events})
+          .done(function()
+          {
+            deactivateSaveSchedule();
+            isTemporarySchedule = false;
+          })
+          .fail(function(requestObject, error, errorThrown)
+          {
+            alert(error);
+          });
+        });
+      </script>
+{% endblock %}

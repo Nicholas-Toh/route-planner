@@ -1,0 +1,144 @@
+{% extends 'bootstrap/base.html' %}
+
+{% macro menu_option_id(menu_id, option_id) -%}
+  {{menu_id}}-option-{{option_id}}
+{%- endmacro %}
+
+{% block title %}
+    {% if title %}{{ title }} - Route Planner{% else %}{{'Welcome to Route Planner' }}{% endif %}
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://kit.fontawesome.com/c494468937.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
+{% endblock %}
+
+
+{% block navbar %}
+
+{% endblock %}
+
+
+{% block content %}
+    <div class="wrapper">
+        <nav id="sidebar" id="nav-sidebar">
+            <div class="sidebar-header">
+                <h3><a class="link-unstyled" href="{{ url_for('main.index') }}">Route Planner</a></h3>
+            </div>
+    
+            <ul class="list-unstyled components">
+                <li>
+                    <a class="link-unstyled" href="{{ url_for('tasks.user_tasks', username=current_user.username) }}">My Tasks</a>
+                </li>
+                <li>
+                    <a class="link-unstyled" href="{{ url_for('calendar.planner', username=current_user.username) }}">Calendar</a>
+                </li>
+            </ul>
+        </nav>
+            
+        <div class="content" id="content">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4" id="header-nav">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                            <i class="fas fa-bars"></i>
+                            <span class="sr-only">Toggle Navigation</span>
+                        </button>
+                    </div>
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1"></div>
+                    <div class="navbar">
+                        <ul class="nav navbar-nav mr-auto mt-2 mt-lg-0">
+                            
+                        </ul>
+                        <ul class="nav navbar-nav navbar-right">
+                            {% if current_user.is_anonymous %}
+                            <li class="nav-item active" ><a class="nav-link" href="{{ url_for('auth.login') }}">{{ 'Login' }}</a></li>
+                            {% else %}
+                            <li class="nav-item active" ><a class="nav-link" href="{{ url_for('auth.logout') }}">{{ 'Logout' }}</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                <div class="d-flex justify-content-between alert alert-info" role="alert">
+                    <div class="align-self-center">
+                        {{ message }}
+                    </div> 
+                    <button onclick="deleteMessage(this)" class="btn btn-primary btn-sm">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+            
+            <h1>{{title}}</h1>
+            {# application content needs to be provided in the app_content block #}
+            {% block app_content %}{% endblock %}
+        </div>        
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+    <script>
+        deleteMessage = function(elem)
+        {
+            $(elem).parent().remove();
+        }
+
+        makeGetCall = function (url, data) 
+        {             
+            return $.ajax({
+                type: "GET",
+                url: url,
+                data: data,
+                dataType: "json",
+            });
+        }
+        makeDeleteCall = function (url, data) 
+        {             
+            return $.ajax({
+                type: "DELETE",
+                url: url,
+                dataType: "json",
+                data: JSON.stringify(data),
+                contentType: "application/json;charset=utf-8",
+            });
+        }
+        makePostCall = function (url, data) 
+        {             
+            return $.ajax({
+                type: "POST",
+                url: url,
+                dataType: "json",
+                data: JSON.stringify(data),
+                contentType: "application/json;charset=utf-8",
+            });
+        }
+
+        UTCToLocal = function(date)
+        {
+          return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes()));
+        }
+        localToUTC = function(date)
+        {
+            
+          var newDate = new Date(date)
+          newDate.setMinutes(newDate.getMinutes() + newDate.getTimezoneOffset());
+          return newDate;
+        }
+        ISODate = function(date)
+        {
+            return moment(date).format("YYYY-MM-DDT00:00:00.000") + "Z";
+        }
+    </script>
+{% endblock %}

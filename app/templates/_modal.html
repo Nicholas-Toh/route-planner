@@ -1,0 +1,26 @@
+<button id="{{ modal_button_id }}" style="display:none" type="button" class="btn btn-primary" data-toggle="modal" data-target="#{{ modal_id }}">
+</button>
+
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-label">{{ table_title }}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% if form_html is defined %}
+            {% include form_html %}
+          {% else %}
+            {{ wtf.quick_form(form, id=form.id)}}
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <input class="btn btn-primary" id="submit" name="submit" type="submit" value="Save" form="{{ form.id }}">
+        </div>
+      </div>
+    </div>
+  </div>

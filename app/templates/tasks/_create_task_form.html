@@ -1,0 +1,12 @@
+<form action method="post" id="{{ form_id }}" class="form" role="form" enctype="">
+    {{ form.hidden_tag() }}
+    <div class="form-group">{{ form.title.label }} {{ form.title(class_="form-control") }}</div>
+    <div class="form-group">{{ form.description.label }} {{ form.description(class_="form-control") }}</div>
+    <div class="form-group">{{ form.outlet.label }} {{ form.outlet(class_="form-control") }}</div>
+    <div class="form-group">{{ form.user_start.label }} {{ form.user_start(class_="form-control") }}</div>
+    <div class="form-group">{{ form.user_end.label }} {{ form.user_end(class_="form-control") }}</div>
+    <div class="form-group">{{ form.estimated_time.label }} {{ form.estimated_time(class_="form-control") }}</div>
+    <div class="form-group">{{ form.repeat_count.label }} {{ form.repeat_count(class_="form-control") }}</div>
+    {{ form.start(class_="hidden-input") }}
+    {{ form.end(class_="hidden-input") }}
+</form>

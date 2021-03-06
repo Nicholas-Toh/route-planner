@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-6" id="upcoming">
+            <h1>Upcoming Tasks</h1>
+            {% include 'tasks/_upcoming_tasks.html' %}
+        </div>
+
+        <div class="col-xs-6" id="">
+            <h1></h1>
+            
+            
+            
+        </div>  
+    </div>
+    <div class="row">
+        <div id="remarks">
+            <h1></h1>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}

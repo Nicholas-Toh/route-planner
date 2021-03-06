@@ -1,0 +1,20 @@
+{% extends 'landing.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% set login_form_id = login_form.id %}
+
+{% block app_content %}
+<h1>Sign In</h1>
+{{ wtf.quick_form(login_form, id=login_form_id) }}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $('#{{ login_form_id }}').submit(function() 
+    {
+        document.forms['{{ login_form_id }}'].elements['{{ login_form.timezone.id }}'].value = Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+</script>
+{% endblock %}
