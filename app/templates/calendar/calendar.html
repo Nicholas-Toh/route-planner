@@ -15,21 +15,31 @@
 
 {% set calendar_menu_option_unschedule_id = "unschedule" %}
 {% set calendar_menu_option_unschedule = "Unschedule task" %}
+{% set calendar_menu_option_task_info_id = "task-info" %}
+{% set calendar_menu_option_task_info = "Info" %}
 
 {% set loading_div_id = "loading" %}
 
 {% set save_schedule_div_id = "save-schedule" %}
 {% set save_schedule_btn_id = "save-schedule-btn" %}
 
+{% set info_task_form_id = "info-task-form" %}
+{% set info_task_modal_id = "info-task-modal" %}
+{% set info_task_modal_title = "Task Information" %}
+{% set info_task_modal_button_id = "display-task-modal-btn" %}
+
 {% block app_content scoped %}
   <!-- Button trigger modal -->
   {% with form = schedule_task_form, table_title=schedule_task_form_title, modal_button_id=schedule_modal_button_id, modal_id=schedule_modal_id %}
     {% include '_modal.html' %}
   {% endwith %}
+  
+  {% with form = info_task_form, table_title=info_task_modal_title, modal_button_id=info_task_modal_button_id, modal_id=info_task_modal_id, form_id=info_task_form_id, form_html='tasks/_task_form.html' %}
+    {% include '_modal.html' %}
+  {% endwith %}
   <div class="row">
     <div class="col-sm-8" id="calendar"></div>
     <div class="col-sm-4">
-      {% with table_title = unscheduled_table_title, table_id=unscheduled_table_id, table_content_class=unscheduled_table_content_class, tasks=all_tasks %}
         <div style="display:none" id="{{ loading_div_id }}">
           <div class="mt-2 mb-2 d-flex justify-content-start">
             <div class="spinner-border text-secondary" role="status">
@@ -48,15 +58,17 @@
           </div>
         </div>
         <div class="overflow-auto task-container mt-2 mb-2">
-          {% include 'tasks/_tasks.html' %}
+          {% with table_title = unscheduled_table_title, table_id=unscheduled_table_id, table_content_class=unscheduled_table_content_class, tasks=all_tasks %}
+            {% include 'tasks/_tasks.html' %}
+          {% endwith %}
         </div>
         <div class="mt-2 mb-2">
           {% include 'calendar/_schedule_stats.html' %}
         </div>
-      {% endwith %}
     </div>
     <div class="dropdown-menu dropdown-menu-sm" id="{{ calendar_menu_id }}">
-    <div class="dropdown-item" id="{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}">{{ calendar_menu_option_unschedule }}</div>
+      <div class="dropdown-item" id="{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}">{{ calendar_menu_option_unschedule }}</div>
+      <div class="dropdown-item" id="{{ menu_option_id(calendar_menu_id, calendar_menu_option_task_info_id) }}">{{ calendar_menu_option_task_info }}</div>
     </div>
   </div>
   
@@ -80,7 +92,7 @@
           var calendarEl = document.getElementById('calendar');
           calendar = new FullCalendar.Calendar(calendarEl, {
             timeZone: 'local',
-            initialDate: '{{ start_date.isoformat() }}',
+            initialDate: "{{ to_timezone(start_date, to_timezone=session['timezone']).isoformat() }}",
             initialView: 'timeGridWeek',
             weekNumberCalculation: 'ISO',
             weekNumbers: true,
@@ -167,7 +179,7 @@
           }
           else
           {
-            fetchUnscheduledTasks(dateInfo.startStr, dateInfo.endStr);
+            fetchUnscheduledTasks(localToUTC(dateInfo.startStr).toISOString(), localToUTC(dateInfo.endStr).toISOString());
           }
         }
 
@@ -203,6 +215,13 @@
               fetchUnscheduledTasks(start, end);
             }
           });
+
+          $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_task_info_id) }}').off("click");
+          $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_task_info_id) }}').click(info.event, function(e)
+          {
+            var payload = info.event.toPlainObject().extendedProps.schedule_obj;
+            fetchTaskInfo(payload.task_id);
+          });
         }
 
         fetchUnscheduledTasks = function(startDate, endDate)
@@ -211,13 +230,25 @@
             {'start': startDate, 'end': endDate, unscheduled: true})
             .done(function(data)
             {
+              console.log(data.tasks);
               populateTasks(data.tasks);
+              fetchTaskInfoCallback();
             })
             .fail(function(requestObject, error, errorThrown) 
             {
               alert(error);
               alert(errorThrown);
             });
+        }
+
+        fetchTaskInfo = function(taskId)
+        {
+          makeGetCall("{{ url_for('tasks.task_data', username=current_user.username) }}", {task_id: taskId})
+          .done(function(data)
+          {
+            loadDetails(data.task);
+            $('#{{ info_task_modal_button_id }}').click()
+          });
         }
 
         unscheduleTask = function(payload, startDate, endDate)
@@ -260,9 +291,14 @@
         {
           for(let i = 0; i < events.length; i++)
           {
+            console.log(events[i])
             if (events[i].is_out_of_range)
             {
               events[i].backgroundColor = "darkorange";
+            }
+            else if (events[i].type === "Mandatory")
+            {
+              events[i].backgroundColor = "purple";
             }
           }
         }
@@ -337,5 +373,14 @@
             alert(error);
           });
         });
+        
+        fetchTaskInfoCallback = function()
+        {
+          $('.{{ unscheduled_table_content_class }}').click(function()
+          {
+            fetchTaskInfo($(this).data('value'));
+          });
+        }
+        fetchTaskInfoCallback();
       </script>
 {% endblock %}

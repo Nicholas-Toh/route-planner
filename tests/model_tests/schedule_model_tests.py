@@ -66,3 +66,30 @@ class ScheduleModelTest(unittest.TestCase):
         self.assertEqual(result8, [])
         self.assertEqual(result9, [s3, s4, s5])
         self.assertEqual(result10, [s1, s2, s3])
+
+    def test_ScheduleModel_IsScheduledAvailable_ShouldReturnTrueIfScheduled(self):
+        u1 = User(zone=Zone.A, role=Role.SALES_REP)
+        o1 = Outlet(zone=Zone.A, rep=u1)
+        t1 = Task(outlet=o1, rep=u1, creator=u1, type=TaskType.CUSTOM, assigner=u1)
+        s1 = Schedule(start=datetime(2021, 1, 27, 4), end=datetime(2021, 1, 27, 7), rep=u1, task=t1)
+
+        db.session.add_all([u1, o1, t1, s1])
+        db.session.commit()
+
+        result1 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 2), datetime(2021, 1, 27, 8))
+        result2 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 2), datetime(2021, 1, 27, 3))
+        result3 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 4), datetime(2021, 1, 27, 8))
+        result4 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 5), datetime(2021, 1, 27, 8))
+        result5 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 5), datetime(2021, 1, 27, 7))
+        result6 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 5), datetime(2021, 1, 27, 6))
+        result7 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 7), datetime(2021, 1, 27, 8))
+        result8 = Schedule.is_schedule_available(u1, datetime(2021, 1, 27, 8), datetime(2021, 1, 27, 9))
+
+        self.assertEqual(result1, False)
+        self.assertEqual(result2, True)
+        self.assertEqual(result3, False)
+        self.assertEqual(result4, False)
+        self.assertEqual(result5, False)
+        self.assertEqual(result6, False)
+        self.assertEqual(result7, True)
+        self.assertEqual(result8, True)

@@ -53,6 +53,7 @@ def solve(config):
             
         mandatory_problem = Problem()
         mandatory_problem.setCustomers(mandatory_customers, 0)
+        mandatory_problem.planningHorizon = 5
         solution = constructive.solve(mandatory_problem, SolomonStrategy.FarthestDistance)
         solution = constructive.solveOptional(optional_problem, solution)   
     else:

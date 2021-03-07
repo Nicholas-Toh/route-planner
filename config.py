@@ -12,5 +12,5 @@ class Config(object):
     LANGUAGES = ['en']
     MAIL_SERVER = None
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    DAYS_PER_WEEK = 6
+    DAYS_PER_WEEK = 7
     TASK_SCHEDULE_LIMIT = 1 #One Day

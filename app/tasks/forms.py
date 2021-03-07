@@ -4,7 +4,7 @@ from wtforms.fields.html5 import IntegerField, DateField, DateTimeLocalField
 from wtforms.validators import DataRequired, Length
 from datetime import datetime
 
-class CreateTaskForm(FlaskForm):
+class TaskForm(FlaskForm):
     id = "create-task-form"
     title = StringField('Title', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[Length(max=300)])

@@ -11,6 +11,7 @@ from app.utils.adapters import schedule_to_fullcalendar, task_to_customer
 from app.utils.math import euclidean_distance
 from app.optimizer.interface import Config, solve, depot
 from app.schemas import ScheduleSchema, TaskSchema
+from app.tasks.forms import TaskForm
 from datetime import datetime, time, timedelta
 import json
 import math
@@ -23,8 +24,11 @@ def planner(username):
 
     start_date = isoparse(request.args.get('start')) or get_current_week(datetime.utcnow(), session['timezone'])[0]
     schedule_task_form = ScheduleTaskForm() 
-    task_choices = [(task.id, f"(ID: {task.id}) {task.title}") for task in current_user.tasks]
+    
+    unscheduled_tasks = Task.get_unscheduled_tasks(current_user, start_date=start_date, end_date=start_date+timedelta(days=6))
+    task_choices = [(task.id, f"(ID: {task.id}) {task.title}") for task in unscheduled_tasks]
     schedule_task_form.task_id.choices = task_choices
+
     if schedule_task_form.validate_on_submit():
         valid = True
 
@@ -62,8 +66,8 @@ def planner(username):
 
             start_date = get_current_week(start, session['timezone'])[0]
     
-    unscheduled_tasks = Task.get_unscheduled_tasks(current_user, start_date=start_date, end_date=start_date+timedelta(days=6))
-    return render_template('calendar/calendar.html', title='Calendar', all_tasks=unscheduled_tasks, schedule_task_form=schedule_task_form, start_date=start_date)
+    info_task_form = TaskForm()
+    return render_template('calendar/calendar.html', title='Calendar', all_tasks=unscheduled_tasks, schedule_task_form=schedule_task_form, info_task_form=info_task_form, start_date=start_date)
 
 @bp.route('/<username>/schedule/data', methods=["GET", "POST", "DELETE"])
 @login_required
@@ -103,8 +107,9 @@ def schedule_data(username):
                 if not rep:
                     valid = False
                     break
-                task = rep.tasks.filter(Task.id == schedule['task_id']).first()
-                schedules.append(Schedule(start=isoparse(schedule['start']), end=isoparse(schedule['end']), rep=rep, task=task))
+                if Schedule.is_schedule_available(rep, isoparse(schedule['start']), isoparse(schedule['end'])):
+                    task = rep.tasks.filter(Task.id == schedule['task_id']).first()
+                    schedules.append(Schedule(start=isoparse(schedule['start']), end=isoparse(schedule['end']), rep=rep, task=task))
             
             current_week = get_current_week(isoparse(schedule['start']))
             if not start_date and not end_date:
@@ -151,9 +156,9 @@ def optimize_schedule(username):
         "stats": {}
     }
 
-    tasks = current_user.tasks.filter(Task.start_date <= end).filter(Task.end_date >= start).all()
+    tasks = current_user.tasks.filter(Task.start_date <= end).filter(Task.end_date >= start)
 
-    if len(tasks) < 1:
+    if len(tasks.all()) < 1:
         return result
 
     optimized_schedule = optimize(current_user, tasks, start)
@@ -165,7 +170,8 @@ def optimize_schedule(username):
 
 def optimize(user, tasks, start):
     config = Config()
-    config.set_optional_customers(tasks)
+    config.set_optional_customers(tasks.filter(Task.type == TaskType.CUSTOM).all())
+    config.set_mandatory_customers(tasks.filter(Task.type == TaskType.MANDATORY).all())
     solution = solve(config)
 
     output = {}

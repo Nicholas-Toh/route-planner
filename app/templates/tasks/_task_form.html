@@ -1,0 +1,66 @@
+{% set outlet_start_id = "outlet-start" %}
+{% set outlet_end_id = "outlet-end" %}
+{% set outlet_value_id = "outlet-value" %}
+{% set outlet_start_div = "outlet-start-div" %}
+{% set outlet_end_div = "outlet-end-div" %}
+{% set outlet_value_div = "outlet-value-div" %}
+
+<form action method="post" id="{{ form_id }}" class="form" role="form" enctype="">
+    {{ form.hidden_tag() }}
+    <div class="form-group">{{ form.title.label }} {{ form.title(class_="form-control") }}</div>
+    <div class="form-group">{{ form.description.label }} {{ form.description(class_="form-control") }}</div>
+    <div class="form-group">{{ form.outlet.label }} {{ form.outlet(class_="form-control") }}</div>
+    <div class="hidden-input mb-1 mt-4" id="{{ outlet_start_div }}">
+        <div class="d-flex flex-row mb-1">
+            <div class="mr-1">Outlet Start Time: </div> <div id="{{outlet_start_id}}"></div> 
+        </div>
+    </div>
+    <div class="hidden-input mb-4 mt-1" id="{{ outlet_end_div }}">
+        <div class="d-flex flex-row">
+            <div class="mr-1">Outlet End Time: </div> <div id="{{outlet_end_id}}"></div> 
+        </div>
+    </div>
+    <div class="hidden-input mb-4 mt-1" id="{{ outlet_value_div }}">
+        <div class="d-flex flex-row">
+            <div class="mr-1">Outlet Value: </div> <div id="{{outlet_value_id}}"></div> 
+        </div>
+    </div>
+    <div class="form-group">{{ form.user_start.label }} {{ form.user_start(class_="form-control") }}</div>
+    <div class="form-group">{{ form.user_end.label }} {{ form.user_end(class_="form-control") }}</div>
+    <div class="form-group">{{ form.estimated_time.label }} {{ form.estimated_time(class_="form-control") }}</div>
+    <div class="form-group">{{ form.repeat_count.label }} {{ form.repeat_count(class_="form-control") }}</div>
+    {{ form.start(class_="hidden-input") }}
+    {{ form.end(class_="hidden-input") }}
+</form>
+
+<script>
+    loadDetails = function(task)
+    {
+        let estimatedTime = minsToHHMM(task.service_time);
+        let outletStart = "N/A"; 
+        let outletEnd = "N/A"; 
+        if (task.outlet.available_times.length > 0)
+        {
+            outletStart = task.outlet.available_times[0].start_time;
+            outletEnd = task.outlet.available_times[0].end_time;
+        }
+        $('#{{ form.title.id }}').val(task.title);
+        $('#{{ form.description.id }}').val(task.description);
+        $('#{{ form.outlet.id }}').append(new Option(task.outlet.name, task.outlet.id));
+        $(`#{{ form.outlet.id }} option[value="${task.outlet.id}"]`).attr("selected",true);
+        $('#{{ outlet_start_id }}').text(outletStart);
+        $('#{{ outlet_end_id }}').text(outletEnd);
+        $('#{{ outlet_value_id }}').text(task.outlet.value.toFixed(4));
+        $('#{{ outlet_start_div }}').removeClass("hidden-input");
+        $('#{{ outlet_end_div }}').removeClass("hidden-input");
+        $('#{{ outlet_value_div }}').removeClass("hidden-input");
+        $('#{{ form.user_start.id }}').val(task.start_date.slice(0, 10));
+        $('#{{ form.user_end.id }}').val(task.end_date.slice(0, 10));
+        $('#{{ form.estimated_time.id }}').val(estimatedTime);
+        $('#{{ form.repeat_count.id }}').val(task.repeat_count);
+        $('#{{ form.id }}-submit').click(function() 
+        {
+            $(this).prop("disabled",true);
+        });
+    }
+</script>

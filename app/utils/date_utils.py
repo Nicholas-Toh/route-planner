@@ -28,15 +28,16 @@ def to_timezone(date, from_timezone='UTC', to_timezone='UTC'):
     return date
 
 def get_current_week(date, user_timezone='UTC'):
-    date = to_timezone(date, to_timezone=user_timezone)
-    first_day = date - timedelta(days=date.isocalendar()[2] - 1)
+    date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+    new_date = to_timezone(date, from_timezone=user_timezone)
+    first_day = new_date - timedelta(days=date.isocalendar()[2] - 1)
     week = [first_day + timedelta(days=i) for i in range(0, 7)]
     return week
 
 def get_week_range(start_date, end_date):
     if end_date < start_date:
         raise ValueError("End date exceeds start date")
-    
+    print(start_date)
     _, start_week, _ = start_date.isocalendar()
     _, end_week, _ = end_date.isocalendar()
     if end_week >= start_week:

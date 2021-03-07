@@ -12,7 +12,7 @@
             <th>End Date</th>
         </tr>
         {% for task in tasks %}
-            <tr class="{{ table_content_class }}">
+            <tr class="{{ table_content_class }}" data-value="{{ task.id }}">
                 <td>{{ task.id }}</td>
                 <td>{{ task.title }}</td>
                 <td>{{ to_timezone(task.start_date, to_timezone=session['timezone']).strftime('%d/%m/%Y') }}</td>
@@ -36,7 +36,7 @@
             $("#{{ table_id }} > tbody:last-child").append
             (
                 `
-                <tr class="{{ table_content_class }}">
+                <tr class="{{ table_content_class }}" data-value="${id}">
                 <td>${id}</td>
                 <td>${title}</td>
                 <td class="text-center" >${start}</td>

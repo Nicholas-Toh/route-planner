@@ -24,8 +24,9 @@ class Day(str, Enum):
     SUNDAY = 7
     
 class TaskType(str, Enum):
-    CUSTOM = "Custom"
     MANDATORY = "Mandatory"
+    CUSTOM = "Custom"
+    
 
 class Role(str, Enum):
     SALES_REP = "Sales Rep"

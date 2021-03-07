@@ -19,7 +19,6 @@ class User(UserMixin, db.Model):
     zone = db.Column(db.Enum(Zone))
     address = db.Column(db.String(200))
     role = db.Column(db.Enum(Role))
-    timezone = db.Column(db.String(100)) #when query time to user, convert to local. when querying time from user, convert to utc
     outlets = db.relationship('Outlet', backref='rep', lazy="dynamic")
     tasks = db.relationship('Task', backref='rep', lazy="dynamic", foreign_keys="Task.rep_id")
     created_tasks = db.relationship('Task', backref='creator', lazy="dynamic", foreign_keys="Task.creator_id")
@@ -301,6 +300,16 @@ class Task(db.Model):
         else:
             return False
 
+    def is_task_deletable(self, user):
+        if user.role == Role.SALES_REP:
+            if user == self.creator and self.type == TaskType.CUSTOM:
+                return True
+        
+        if user.role == Role.SALES_REP_LEAD:
+            return True
+        
+        return False
+
     @staticmethod
     def get_unscheduled_tasks(user, start_date=None, end_date=None):
         if start_date is not None and end_date is not None:
@@ -312,7 +321,7 @@ class Task(db.Model):
                 & (Schedule.start <= end_date if end_date else None),
                 isouter=True)
         
-        return query.filter(Schedule.task_id==None).all()
+        return query.filter(Schedule.task_id==None).order_by(Task.type.desc()).all()
 
 class TaskWeek(db.Model):
     __tablename__ = "task_week"
@@ -363,6 +372,7 @@ class TaskWeek(db.Model):
         weeks = get_week_range(task.start_date, task.end_date)
         task_weeks = []
         for week in weeks:
+            print(week[0])
             task_weeks.append(TaskWeek(task, week[0], week[-1]))
 
         return task_weeks
@@ -423,7 +433,11 @@ class Schedule(db.Model): #Some tasks can be scheduled more than once because th
             
     @staticmethod
     def is_schedule_available(user, start, end):
-        return Schedule.query.filter(Schedule.rep == user).filter(Schedule.start >= start).filter(Schedule.end <= end).count() == 0
+        print(Schedule.query.filter(Schedule.rep == user).filter(Schedule.start >= start).count())
+        print(Schedule.query.filter(Schedule.rep == user).filter(Schedule.end <= end).count())
+        return \
+            Schedule.query.filter(Schedule.rep == user).filter(Schedule.start >= start).filter(Schedule.end <= end).count() == 0 and \
+            Schedule.query.filter(Schedule.rep == user).filter(Schedule.end > start).filter(Schedule.start <= end).count() == 0
 
     @staticmethod
     def is_task_scheduled(task, start, end):

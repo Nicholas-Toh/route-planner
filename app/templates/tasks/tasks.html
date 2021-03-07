@@ -5,7 +5,7 @@
 {% set create_task_modal_id = "create-task-modal" %}
 {% set create_task_modal_title = "Create a New Task" %}
 {% set create_task_modal_button_id = "create-task-modal-btn" %}
-{% set create_task_modal_button_name = "+ Create New Task" %}
+{% set create_task_modal_button_name = "+ Create New Task" %}、
 
 {% set delete_task_form_id = "delete-task-form" %}
 {% set delete_task_modal_id = "delete-task-modal" %}
@@ -23,7 +23,7 @@
 {% set task_menu_option_delete_task = "Delete Task" %}
 
 {% block app_content %}
-{% with form = create_task_form, table_title=create_task_modal_title, modal_button_id=create_task_modal_button_id, modal_id=create_task_modal_id, form_id=create_task_form_id, form_html='tasks/_create_task_form.html' %}
+{% with form = create_task_form, table_title=create_task_modal_title, modal_button_id=create_task_modal_button_id, modal_id=create_task_modal_id, form_id=create_task_form_id, form_html='tasks/_task_form.html' %}
   {% include '_modal.html' %}
 {% endwith %}
 
@@ -36,7 +36,7 @@
         <button class="btn btn-dark" id="{{ date_left_button_id }}"><i class="fas fa-chevron-left"></i></button>
     </div>
     <div class="col-sm-5 text-center">
-        <h2 class="text-center date-header">{{ start.strftime('%d/%m/%Y') }} - {{ end.strftime('%d/%m/%Y') }}</h2>
+        <h2 class="text-center date-header">{{ to_timezone(start, to_timezone=session['timezone']).strftime('%d/%m/%Y') }} - {{ to_timezone(end-timedelta(days=1), to_timezone=session['timezone']).strftime('%d/%m/%Y') }}</h2>
     </div>
     <div class="col-sm-1 text-right">
         <button class="btn btn-dark" id="{{ date_right_button_id }}"><i class="fas fa-chevron-right"></i></button>
@@ -79,13 +79,15 @@
 {% block scripts %}
 {{ super() }}
     <script>
-        var start = UTCToLocal(new Date(Date.parse('{{ start.isoformat() }}')));
-        var end = addDays(start, weekOffset);
-        console.log('{{ start.isoformat() }}');
+        var start = new Date(Date.parse("{{ to_timezone(start, to_timezone=session['timezone']).isoformat() }}"));
         var weekOffset = parseInt('{{ config["DAYS_PER_WEEK"] }}');
+        var end = addDays(start, weekOffset);
+        console.log(ISODate(start));
+        console.log(ISODate(end));
+        
         $('#{{ date_left_button_id }}').click(function()
         {
-            start = addDays(start, -(weekOffset + 1));
+            start = addDays(start, -weekOffset);
             end = addDays(start, weekOffset);
             
             window.location.replace(`{{ url_for('tasks.user_tasks', username=current_user.username) }}?start=${ISODate(start)}&end=${ISODate(end)}`);
@@ -108,7 +110,7 @@
         
         $('#{{ date_right_button_id }}').click(function()
         {
-            start = addDays(start, weekOffset + 1);
+            start = addDays(start, weekOffset);
             end = addDays(start, weekOffset);
             window.location.replace(`{{ url_for('tasks.user_tasks', username=current_user.username) }}?start=${ISODate(start)}&end=${ISODate(end)}`);
             

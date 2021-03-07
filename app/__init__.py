@@ -12,6 +12,7 @@ from logging.handlers import RotatingFileHandler
 import os
 
 from app.utils.date_utils import to_timezone
+from datetime import timedelta
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -73,6 +74,7 @@ def create_app(config_class=Config):
 
     app.jinja_env.globals.update(
     to_timezone=to_timezone,
+    timedelta=timedelta,
     )
     return app
 

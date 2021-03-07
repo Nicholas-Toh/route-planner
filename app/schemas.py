@@ -1,10 +1,16 @@
 from app import marshmallow as ma
-from app.models import TaskWeek, Task, Outlet, Schedule
+from app.models import TaskWeek, Task, Outlet, Schedule, AvailableTime
+
+class AvailableTimeSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = AvailableTime
+
 class OutletSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Outlet
     
     value = ma.auto_field(as_string=True)
+    available_times = ma.List(ma.Nested(AvailableTimeSchema))
 
 class TaskSchema(ma.SQLAlchemyAutoSchema):
     class Meta:

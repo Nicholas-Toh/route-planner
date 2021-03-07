@@ -17,12 +17,13 @@ def schedule_to_fullcalendar(obj, timezone):
     dict = \
     {
         "id": obj.id,
-        "title": obj.task.title,
+        "title": "ID: " + str(obj.task.id),
         "description": obj.task.description,
         "start": obj.start.replace(microsecond=0).isoformat()+'Z',
         "end": obj.end.replace(microsecond=0).isoformat()+'Z',
         "schedule_obj": ScheduleSchema().dump(obj),
-        "is_out_of_range": is_out_of_range
+        "is_out_of_range": is_out_of_range,
+        "type": obj.task.type
     }
     return dict
 

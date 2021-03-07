@@ -4,9 +4,9 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Task, User, Schedule, TaskWeek, Outlet
 from app.enums import Role, TaskType
-from app.schemas import TaskWeekCollectionSchema
+from app.schemas import TaskWeekCollectionSchema, TaskSchema
 from app.utils.date_utils import isoparse, get_current_week, to_timezone
-from app.tasks.forms import CreateTaskForm, DeleteTaskForm
+from app.tasks.forms import TaskForm, DeleteTaskForm
 
 from datetime import datetime, timedelta
 import json
@@ -17,7 +17,7 @@ def user_tasks(username):
     if username != current_user.username and current_user.role != Role.SALES_REP_LEAD:
         return redirect(url_for('tasks.user_tasks', username=current_user.username))
 
-    create_task_form = CreateTaskForm()
+    create_task_form = TaskForm()
     outlet_choices = [(outlet.id, outlet.name) for outlet in current_user.outlets]
     create_task_form.outlet.choices = outlet_choices
     if create_task_form.validate_on_submit():
@@ -44,11 +44,11 @@ def user_tasks(username):
             task = Task(creator=current_user, type=TaskType.CUSTOM, title=title, description=description, start_date=start, end_date=end, 
             service_time=estimated_time, repeat_count=repeat_count, outlet=outlet, rep=current_user, assigner=current_user)
             weeks = TaskWeek.create_task_weeks(task)
-            #db.session.add(task, weeks)
-            #db.session.commit()
+            db.session.add(task, weeks)
+            db.session.commit()
 
     delete_task_form = DeleteTaskForm() 
-    task_choices = [(task.id, f"(ID: {task.id}) {task.title}") for task in current_user.tasks]
+    task_choices = [(task.id, f"(ID: {task.id}) {task.title}") for task in current_user.tasks if task.is_task_deletable(current_user)]
     delete_task_form.task_id.choices = task_choices
     if delete_task_form.validate_on_submit():
         valid = True
@@ -57,11 +57,12 @@ def user_tasks(username):
             valid = False
             flash('Invalid Task')
 
-        if task.creator != current_user:
+        if not task.is_task_deletable(current_user):
             valid = False
             flash('Invalid Task')
         
         if valid:
+            flash(f'Task {task.id} successfully deleted')
             db.session.delete(task)
             db.session.commit()
 
@@ -69,6 +70,7 @@ def user_tasks(username):
     end = request.args.get('end')
     if start:
         start = isoparse(start)
+        print('from url', start)
     else:
         start = get_current_week(datetime.utcnow(), session['timezone'])[0]
     if end:
@@ -76,12 +78,23 @@ def user_tasks(username):
     else:
         end = start + timedelta(days=current_app.config['DAYS_PER_WEEK'])
 
-    current_task_week = TaskWeek.query.filter(TaskWeek.end_date >= start).filter(TaskWeek.start_date <= end)
+    current_task_week = TaskWeek.query.filter(TaskWeek.end_date >= start).filter(TaskWeek.start_date < end)
 
     mandatory_tasks = current_task_week.join(Task, Task.id == TaskWeek.task_id).filter(Task.type == TaskType.MANDATORY).join(User, User.id == Task.rep_id).filter(User.username == username).order_by(Task.id.desc()).all()
     custom_tasks = current_task_week.join(Task, Task.id == TaskWeek.task_id).filter(Task.type == TaskType.CUSTOM).join(User, User.id == Task.rep_id).filter(User.username == username).order_by(Task.id.desc()).all()
     schedules = Schedule.get_schedule(current_user, start_date=datetime.utcnow())
     return render_template('tasks/tasks.html', title='My Tasks', mandatory_tasks=mandatory_tasks, custom_tasks=custom_tasks, upcoming_schedules=schedules, start=start, end=end, create_task_form=create_task_form, delete_task_form=delete_task_form)    
+
+@bp.route('/<username>/task', methods=["GET"])
+@login_required
+def task_data(username):
+    if username != current_user.username and current_user.role != Role.SALES_REP_LEAD:
+        return redirect(url_for('tasks.user_tasks', username=current_user.username))
+
+    task_id = request.args.get('task_id')
+    task = current_user.tasks.filter(Task.id == task_id).first()
+
+    return {'task': TaskSchema().dump(task)}
 
 @bp.route('/<username>/week/data', methods=["GET"])
 @login_required
