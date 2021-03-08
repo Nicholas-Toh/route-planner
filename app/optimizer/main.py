@@ -56,21 +56,23 @@ def solve(config):
         mandatory_problem.planningHorizon = 5
         solution = constructive.solve(mandatory_problem, SolomonStrategy.FarthestDistance)
         solution = constructive.solveOptional(optional_problem, solution)   
+        optional_problem.unplannedCustomers += mandatory_problem.getUnplannedCustomers()
     else:
         solution = constructive.solveOptional(optional_problem)
 
-    print("Time taken for first solution:", solution.calculateTime())
-    print("Distance of first solution:", sum(solution.calculateDistance()))
-    print("Value of first solution:", solution.routes[0].calculateValue())
-    print("Number of customers visited:", sum([len(route.solution) for route in solution.routes]))
     solution.optimize()
-
+ 
     solution = variable_neighborhood_search(solution, optional_problem, max_iterations=300)
     solution.optimize()
     schedule = convert_solution(solution)
     
     return schedule
 
+    
+    print("Time taken for first solution:", solution.calculateTime())
+    print("Distance of first solution:", sum(solution.calculateDistance()))
+    print("Value of first solution:", solution.routes[0].calculateValue())
+    print("Number of customers visited:", sum([len(route.solution) for route in solution.routes]))
 def convert_solution(solution):
     schedule = {}
     for i, route in enumerate(solution.routes):

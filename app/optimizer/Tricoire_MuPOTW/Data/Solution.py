@@ -395,8 +395,7 @@ class Route:
     def calculateValue(self):
         value = 0
         for cust in self.nodeList:
-            if not cust.info.mandatory:
-                value += cust.info.value
+            value += cust.info.value
 
         return value
 

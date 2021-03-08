@@ -39,11 +39,10 @@ def user_tasks(username):
             flash("Invalid outlet ID")
             valid = False
 
-        print(valid)
         if valid:
-            task = Task(creator=current_user, type=TaskType.CUSTOM, title=title, description=description, start_date=start, end_date=end, 
-            service_time=estimated_time, repeat_count=repeat_count, outlet=outlet, rep=current_user, assigner=current_user)
-            weeks = TaskWeek.create_task_weeks(task)
+            task = Task(creator=current_user, type=TaskType.CUSTOM, title=title, description=description, start_date=start, end_date=end,
+                        service_time=estimated_time, repeat_count=repeat_count, outlet=outlet, rep=current_user, assigner=current_user)
+            weeks = TaskWeek.create_task_weeks(task, session['timezone'])
             db.session.add(task, weeks)
             db.session.commit()
 
@@ -65,12 +64,13 @@ def user_tasks(username):
             flash(f'Task {task.id} successfully deleted')
             db.session.delete(task)
             db.session.commit()
+            task_choices = [(task.id, f"(ID: {task.id}) {task.title}") for task in current_user.tasks if task.is_task_deletable(current_user)]
+            delete_task_form.task_id.choices = task_choices
 
     start = request.args.get('start')
     end = request.args.get('end')
     if start:
         start = isoparse(start)
-        print('from url', start)
     else:
         start = get_current_week(datetime.utcnow(), session['timezone'])[0]
     if end:
@@ -79,7 +79,6 @@ def user_tasks(username):
         end = start + timedelta(days=current_app.config['DAYS_PER_WEEK'])
 
     current_task_week = TaskWeek.query.filter(TaskWeek.end_date >= start).filter(TaskWeek.start_date < end)
-
     mandatory_tasks = current_task_week.join(Task, Task.id == TaskWeek.task_id).filter(Task.type == TaskType.MANDATORY).join(User, User.id == Task.rep_id).filter(User.username == username).order_by(Task.id.desc()).all()
     custom_tasks = current_task_week.join(Task, Task.id == TaskWeek.task_id).filter(Task.type == TaskType.CUSTOM).join(User, User.id == Task.rep_id).filter(User.username == username).order_by(Task.id.desc()).all()
     schedules = Schedule.get_schedule(current_user, start_date=datetime.utcnow())
@@ -110,9 +109,6 @@ def taskweek_data(username):
     if end_date:
         end_date = isoparse(end_date)
         query = query.filter(TaskWeek.end_date <= end_date)
-    print(start_date)
-    print(end_date)
-    print(query.all())
    
     task_weeks = query.join(Task, Task.id == TaskWeek.task_id).join(User, User.id == Task.rep_id).filter(User.username == username).order_by(Task.id.desc()).all()
     return_obj = {"weeks": task_weeks}

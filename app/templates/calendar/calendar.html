@@ -190,31 +190,39 @@
           var top = info.jsEvent.pageY;
           var left = info.jsEvent.pageX - body.getBoundingClientRect().x;
           
-          if (!isTemporarySchedule)
-          {
-            menu.style.display = "block";
-            menu.style.position = "absolute";
-            menu.style.top = top+"px";
-            menu.style.left = left+"px";
-            menu.classList.add("show");
-          }
+          
+          menu.style.display = "block";
+          menu.style.position = "absolute";
+          menu.style.top = top+"px";
+          menu.style.left = left+"px";
+          menu.classList.add("show");
+          
           registerHandlers(info, isTemporarySchedule);
         }
 
         registerHandlers = function (info, isTemporarySchedule)
         {
           $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}').off("click");
-          $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}').click(info.event, function(e)
+          if (isTemporarySchedule)
           {
-            var payload = info.event.toPlainObject().extendedProps.schedule_obj;
-            var start = info.view.currentStart.toISOString().slice(0, 16);
-            var end = info.view.currentEnd.toISOString().slice(0, 16);
-            if (!isTemporarySchedule)
+            $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}').addClass("hidden-input");
+          }
+          else
+          {
+            $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}').removeClass("hidden-input");
+            $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_unschedule_id) }}').click(info.event, function(e)
             {
-              unscheduleTask(payload, start, end);
-              fetchUnscheduledTasks(start, end);
-            }
-          });
+              var payload = info.event.toPlainObject().extendedProps.schedule_obj;
+              var start = info.view.currentStart.toISOString().slice(0, 16);
+              var end = info.view.currentEnd.toISOString().slice(0, 16);
+              if (!isTemporarySchedule)
+              {
+                unscheduleTask(payload, start, end);
+                fetchUnscheduledTasks(start, end);
+              }
+            });
+          }
+          
 
           $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_task_info_id) }}').off("click");
           $('#{{ menu_option_id(calendar_menu_id, calendar_menu_option_task_info_id) }}').click(info.event, function(e)

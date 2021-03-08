@@ -23,10 +23,8 @@ def planner(username):
         return redirect(url_for('calendar.planner', username=current_user.username))
 
     start_date = isoparse(request.args.get('start')) or get_current_week(datetime.utcnow(), session['timezone'])[0]
-    schedule_task_form = ScheduleTaskForm() 
-    
-    unscheduled_tasks = Task.get_unscheduled_tasks(current_user, start_date=start_date, end_date=start_date+timedelta(days=6))
-    task_choices = [(task.id, f"(ID: {task.id}) {task.title}") for task in unscheduled_tasks]
+    schedule_task_form = ScheduleTaskForm()     
+    task_choices = [(task.id, f"(ID: {task.id}) {task.title}") for task in current_user.tasks]
     schedule_task_form.task_id.choices = task_choices
 
     if schedule_task_form.validate_on_submit():
@@ -47,7 +45,7 @@ def planner(username):
             flash(f'Tasks can only be scheduled for {current_app.config["TASK_SCHEDULE_LIMIT"]} days')
             valid = False
 
-        week = get_current_week(start)
+        week = get_current_week(start, session['timezone'])
         if not Schedule.is_task_scheduled(task, week[0], week[-1]):
             flash(f'Task {schedule_task_form.task_id.data} has already been scheduled for this week')
             valid = False
@@ -66,6 +64,7 @@ def planner(username):
 
             start_date = get_current_week(start, session['timezone'])[0]
     
+    unscheduled_tasks = Task.get_unscheduled_tasks(current_user, start_date=start_date, end_date=start_date+timedelta(days=6))
     info_task_form = TaskForm()
     return render_template('calendar/calendar.html', title='Calendar', all_tasks=unscheduled_tasks, schedule_task_form=schedule_task_form, info_task_form=info_task_form, start_date=start_date)
 
@@ -199,8 +198,6 @@ def optimize(user, tasks, start):
 
     db.session.flush()
  
-    print(output['schedule'])
-
     return output
 
 #schedules must be sorted according to date

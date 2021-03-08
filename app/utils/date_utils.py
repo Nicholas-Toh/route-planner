@@ -1,4 +1,4 @@
-from datetime import date, timedelta, datetime, timezone, time
+from datetime import timedelta, datetime
 import dateutil.parser
 from backports.zoneinfo import ZoneInfo
 from functools import lru_cache
@@ -37,7 +37,6 @@ def get_current_week(date, user_timezone='UTC'):
 def get_week_range(start_date, end_date):
     if end_date < start_date:
         raise ValueError("End date exceeds start date")
-    print(start_date)
     _, start_week, _ = start_date.isocalendar()
     _, end_week, _ = end_date.isocalendar()
     if end_week >= start_week:

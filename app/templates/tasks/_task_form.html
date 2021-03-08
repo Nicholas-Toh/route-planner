@@ -15,7 +15,7 @@
             <div class="mr-1">Outlet Start Time: </div> <div id="{{outlet_start_id}}"></div> 
         </div>
     </div>
-    <div class="hidden-input mb-4 mt-1" id="{{ outlet_end_div }}">
+    <div class="hidden-input mb-1 mt-1" id="{{ outlet_end_div }}">
         <div class="d-flex flex-row">
             <div class="mr-1">Outlet End Time: </div> <div id="{{outlet_end_id}}"></div> 
         </div>
@@ -44,13 +44,14 @@
             outletStart = task.outlet.available_times[0].start_time;
             outletEnd = task.outlet.available_times[0].end_time;
         }
+        $('#{{ modal_id }} #modal-label').html("{{ table_title }}" + ` (ID: ${task.id})`);
         $('#{{ form.title.id }}').val(task.title);
         $('#{{ form.description.id }}').val(task.description);
         $('#{{ form.outlet.id }}').append(new Option(task.outlet.name, task.outlet.id));
         $(`#{{ form.outlet.id }} option[value="${task.outlet.id}"]`).attr("selected",true);
         $('#{{ outlet_start_id }}').text(outletStart);
         $('#{{ outlet_end_id }}').text(outletEnd);
-        $('#{{ outlet_value_id }}').text(task.outlet.value.toFixed(4));
+        $('#{{ outlet_value_id }}').text(parseFloat(task.outlet.value).toFixed(4));
         $('#{{ outlet_start_div }}').removeClass("hidden-input");
         $('#{{ outlet_end_div }}').removeClass("hidden-input");
         $('#{{ outlet_value_div }}').removeClass("hidden-input");

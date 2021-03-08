@@ -7,7 +7,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 from app.enums import Zone, TaskStatus, TaskType, Role, Day
-from app.utils.date_utils import get_current_week, get_week_range
+from app.utils.date_utils import get_current_week, get_week_range, to_timezone
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -350,8 +350,6 @@ class TaskWeek(db.Model):
         else:
             self.set_status(TaskStatus.OPEN)
 
-        print(self.status)
-
     def set_status(self, task_status: TaskStatus):
         if not isinstance(task_status, TaskStatus):
             raise ValueError("TaskWeek - Invalid status")
@@ -368,12 +366,13 @@ class TaskWeek(db.Model):
             return False
 
     @staticmethod
-    def create_task_weeks(task):
-        weeks = get_week_range(task.start_date, task.end_date)
+    def create_task_weeks(task, timezone='UTC'):
+        start_date = to_timezone(task.start_date, to_timezone=timezone)
+        end_date = to_timezone(task.end_date, to_timezone=timezone)
+        weeks = get_week_range(start_date, end_date) 
         task_weeks = []
         for week in weeks:
-            print(week[0])
-            task_weeks.append(TaskWeek(task, week[0], week[-1]))
+            task_weeks.append(TaskWeek(task, to_timezone(week[0], from_timezone=timezone), to_timezone(week[-1], from_timezone=timezone)))
 
         return task_weeks
 
@@ -409,13 +408,6 @@ class Schedule(db.Model): #Some tasks can be scheduled more than once because th
         self.task = task
 
     @staticmethod
-    def get_current_week_schedule(user):
-        start_date = datetime.utcnow()
-        last_date = get_current_week(start_date)[-1]
-        print(start_date, last_date)
-        return Schedule.get_schedule(user, start_date, last_date)
-
-    @staticmethod 
     def get_schedule(user, start_date=None, end_date=None):
         if start_date is not None and end_date is not None:
             if start_date > end_date:

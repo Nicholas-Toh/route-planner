@@ -294,19 +294,15 @@ class SolomonConstructive:
             optimalU = -1
             for k in range (1, len(route.nodeList)):
                 c1 = self.CriterionC1(k-1, cust, k, route)
-                route.insertCustomer(cust, k, False)
-                isFeasible = route.isFeasible()
                 
-                if c1 < minC1 and isFeasible:
-                    minC1 = c1
-                    optimalU = k
-                    feasible = True
-
-                #else:
-                    #print('infeasible')
-
-                route.deleteCustomer(k, False)
-                
+                if c1 < minC1:
+                    route.insertCustomer(cust, k, False)
+                    if route.isFeasible():
+                        minC1 = c1
+                        optimalU = k
+                        feasible = True
+                    route.deleteCustomer(k, False)
+     
             if feasible:
                 route.insertCustomer(cust, optimalU, False)
                 unroutedCustomers.pop(i)
