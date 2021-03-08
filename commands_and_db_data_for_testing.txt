@@ -1,12 +1,15 @@
-
+run server
 cd C:\Users\User\Desktop\MMU\FYP\Code\route_planner
 venv\Scripts\activate
 set FLASK_ENV=development
 flask run
 
+run db migration
 flask db init
 flask db migrate -m "initial migration"
 flask db upgrade
+
+insert data into db
 flask shell
 
 from app.enums import *
