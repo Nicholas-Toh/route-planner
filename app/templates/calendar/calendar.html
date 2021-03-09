@@ -179,7 +179,7 @@
           }
           else
           {
-            fetchUnscheduledTasks(localToUTC(dateInfo.startStr).toISOString(), localToUTC(dateInfo.endStr).toISOString());
+            fetchUnscheduledTasks(dateInfo.startStr.toISOString(), dateInfo.endStr.toISOString());
           }
         }
 
