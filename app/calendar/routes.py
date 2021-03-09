@@ -84,7 +84,7 @@ def schedule_data(username):
             
             schedule_id = data['task']['id']
             schedule = Schedule.query.filter(Schedule.id == schedule_id).first()
-
+            print(schedule)
             if not schedule:
                 valid = False
                 
