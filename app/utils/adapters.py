@@ -4,16 +4,22 @@ from app.utils.date_utils import time_to_minutes, to_timezone, to_datetime
 from app.schemas import ScheduleSchema
 
 import json    
-from datetime import timezone
+from datetime import timezone, timedelta
 
 def schedule_to_fullcalendar(obj, timezone):
     #TODO: IMPLEMENT MULTIPLE AVAILABLE TIMES
     local_start_time = obj.task.outlet.available_times.first().start_time
-    available_start_time = to_timezone(obj.start.replace(hour=local_start_time.hour, minute=local_start_time.minute), from_timezone=timezone)
+    available_start_time = to_timezone(obj.start.replace(hour=local_start_time.hour, minute=local_start_time.minute, second=0, microsecond=0), from_timezone=timezone)
     local_end_time = obj.task.outlet.available_times.first().end_time
     available_end_time = to_timezone(obj.end.replace(hour=local_end_time.hour, minute=local_end_time.minute), from_timezone=timezone)
-    is_out_of_range = True if obj.end > available_end_time or obj.end < available_start_time else False
-    
+    is_out_of_range = False
+    if obj.end - available_start_time < timedelta(minutes=obj.task.service_time):
+        is_out_of_range = True
+    if available_end_time - obj.start < timedelta(minutes=obj.task.service_time):
+        is_out_of_range = True
+    if obj.end - obj.start < timedelta(minutes=obj.task.service_time):
+        is_out_of_range = True
+    print(is_out_of_range)
     dict = \
     {
         "id": obj.id,
