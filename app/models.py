@@ -321,7 +321,7 @@ class Task(db.Model):
                 & (Schedule.start <= end_date if end_date else None),
                 isouter=True)
         
-        return query.filter(Schedule.task_id==None).order_by(Task.type.desc()).all()
+        return query.filter(Schedule.task_id==None).order_by(Task.type.desc()).order_by(Task.end_date).all()
 
 class TaskWeek(db.Model):
     __tablename__ = "task_week"
