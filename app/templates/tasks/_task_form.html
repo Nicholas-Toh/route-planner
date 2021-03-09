@@ -5,6 +5,9 @@
 {% set outlet_end_div = "outlet-end-div" %}
 {% set outlet_value_div = "outlet-value-div" %}
 
+{% set task_type_div = "task-type-div" %}
+{% set task_type_id = "task-type-id" %}
+
 <form action method="post" id="{{ form_id }}" class="form" role="form" enctype="">
     {{ form.hidden_tag() }}
     <div class="form-group">{{ form.title.label }} {{ form.title(class_="form-control") }}</div>
@@ -20,9 +23,14 @@
             <div class="mr-1">Outlet End Time: </div> <div id="{{outlet_end_id}}"></div> 
         </div>
     </div>
-    <div class="hidden-input mb-4 mt-1" id="{{ outlet_value_div }}">
+    <div class="hidden-input mb-1 mt-1" id="{{ outlet_value_div }}">
         <div class="d-flex flex-row">
             <div class="mr-1">Outlet Value: </div> <div id="{{outlet_value_id}}"></div> 
+        </div>
+    </div>
+    <div class="hidden-input mb-4 mt-1" id="{{ task_type_div }}">
+        <div class="d-flex flex-row">
+            <div class="mr-1">Task Type: </div> <div id="{{task_type_id}}"></div> 
         </div>
     </div>
     <div class="form-group">{{ form.user_start.label }} {{ form.user_start(class_="form-control") }}</div>
@@ -52,9 +60,11 @@
         $('#{{ outlet_start_id }}').text(outletStart);
         $('#{{ outlet_end_id }}').text(outletEnd);
         $('#{{ outlet_value_id }}').text(parseFloat(task.outlet.value).toFixed(4));
+        $('#{{ task_type_id }}').text(task.type);
         $('#{{ outlet_start_div }}').removeClass("hidden-input");
         $('#{{ outlet_end_div }}').removeClass("hidden-input");
         $('#{{ outlet_value_div }}').removeClass("hidden-input");
+        $('#{{ task_type_div }}').removeClass("hidden-input");
         $('#{{ form.user_start.id }}').val(task.start_date.slice(0, 10));
         $('#{{ form.user_end.id }}').val(task.end_date.slice(0, 10));
         $('#{{ form.estimated_time.id }}').val(estimatedTime);
