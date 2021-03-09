@@ -431,8 +431,8 @@ class Schedule(db.Model): #Some tasks can be scheduled more than once because th
         print("none" if not sch else sch.start)
         print("none" if not sch else sch.end)
         sch2 = Schedule.query.filter(Schedule.rep == user).filter(Schedule.end > start).filter(Schedule.start <= end).first()
-        print("none" if not sch2 else sch.start)
-        print("none" if not sch2 else sch.end)
+        print("none" if not sch2 else sch2.start)
+        print("none" if not sch2 else sch2.end)
         return \
             Schedule.query.filter(Schedule.rep == user).filter(Schedule.start >= start).filter(Schedule.end <= end).count() == 0 and \
             Schedule.query.filter(Schedule.rep == user).filter(Schedule.end > start).filter(Schedule.start <= end).count() == 0
