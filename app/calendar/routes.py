@@ -109,7 +109,8 @@ def schedule_data(username):
                 print(Schedule.is_schedule_available(rep, isoparse(schedule['start']), isoparse(schedule['end'])))
                 if Schedule.is_schedule_available(rep, isoparse(schedule['start']), isoparse(schedule['end'])):
                     task = rep.tasks.filter(Task.id == schedule['task_id']).first()
-                    schedules.append(Schedule(start=isoparse(schedule['start']), end=isoparse(schedule['end']), rep=rep, task=task))
+                    
+                    schedules.append(Schedule(start=isoparse(schedule['start']).replace(microsecond=0), end=isoparse(schedule['end']).replace(microsecond=0), rep=rep, task=task))
             
             current_week = get_current_week(isoparse(schedule['start']))
             if not start_date and not end_date:
