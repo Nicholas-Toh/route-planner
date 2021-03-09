@@ -179,7 +179,7 @@
           }
           else
           {
-            fetchUnscheduledTasks(dateInfo.startStr.toISOString(), dateInfo.endStr.toISOString());
+            fetchUnscheduledTasks(new Date(dateInfo.startStr).toISOString(), new Date(dateInfo.endStr).toISOString());
           }
         }
 
