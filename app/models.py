@@ -425,6 +425,8 @@ class Schedule(db.Model): #Some tasks can be scheduled more than once because th
             
     @staticmethod
     def is_schedule_available(user, start, end):
+        start = start.replace(microsecond=0)
+        end = end.replace(microsecond=0)
         print(start)
         print(end)
         sch = Schedule.query.filter(Schedule.rep == user).filter(Schedule.start >= start).filter(Schedule.end <= end).first()
@@ -433,6 +435,7 @@ class Schedule(db.Model): #Some tasks can be scheduled more than once because th
         sch2 = Schedule.query.filter(Schedule.rep == user).filter(Schedule.end > start).filter(Schedule.start <= end).first()
         print("none" if not sch2 else sch2.start)
         print("none" if not sch2 else sch2.end)
+        print()
         return \
             Schedule.query.filter(Schedule.rep == user).filter(Schedule.start >= start).filter(Schedule.end <= end).count() == 0 and \
             Schedule.query.filter(Schedule.rep == user).filter(Schedule.end > start).filter(Schedule.start <= end).count() == 0
