@@ -5,13 +5,13 @@ PATH = "Datasets\\"
 FILENAME = "_distmatrix.txt"
 CFILENAME = "_distmatrix_cpp.txt"
 def generate_dist_matrix(customers):
-    dist_matrix = []
+    dist_matrix = {}
     for customer in customers:
-        temp = []
+        temp = {}
         for customer2 in customers:
             dist = round(((customer.info.x - customer2.info.x)**2 + (customer.info.y - customer2.info.y)**2)**(1/2),3) 
-            temp.append(dist)
-        dist_matrix.append(temp)
+            temp[customer2.info.id] = dist
+        dist_matrix[customer.info.id] = temp
     return dist_matrix
 
 def output_dist_matrix(data, filename):
