@@ -33,7 +33,7 @@ def solve(config):
         raise ValueError("No customers to solve")
 
     dist_matrix = generate_dist_matrix([depot] + config.mandatory_customers + config.optional_customers)
-
+    print(dist_matrix)
     for cust in optional_customers:
         cust.timeMatrix = dist_matrix
         cust.info.mandatory = False
