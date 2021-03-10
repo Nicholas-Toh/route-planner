@@ -2,7 +2,7 @@ from app.optimizer.Tricoire_MuPOTW.Data.Problem import Problem, Customer, Info
 from app.optimizer.Tricoire_MuPOTW.Heuristics.Constructive.Solomon import SolomonConstructive
 from app.optimizer.Tricoire_MuPOTW.Heuristics.Constructive.Strategy import SolomonStrategy
 from app.optimizer.Tricoire_MuPOTW.Heuristics.VNS.VNS import variable_neighborhood_search
-from app.optimizer.Tricoire_MuPOTW.Data.Reader import read_dist_matrix
+from app.optimizer.Tricoire_MuPOTW.Data.DistanceMatrixGenerator import generate_dist_matrix
 from app.optimizer.Tricoire_MuPOTW.Visualization.GanttChart import plot
 from flask import session
 
@@ -32,7 +32,7 @@ def solve(config):
     if (not mandatory_customers or len(mandatory_customers) < 2) and (not optional_customers or len(optional_customers) < 2):
         raise ValueError("No customers to solve")
 
-    dist_matrix = read_dist_matrix(f'{FILENAME}_distmatrix.txt')
+    dist_matrix = generate_dist_matrix([depot] + config.mandatory_customers + config.optional_customers)
 
     for cust in optional_customers:
         cust.timeMatrix = dist_matrix
